@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+
+// =============== ENUMS ===============
+enum UserRole {
+  UNASSIGNED
+  INTERVIEWEE
+  INTERVIEWER
+}
+enum BookingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+enum AvailabilityStatus {
+  AVAILABLE
+  BOOKED
+  BLOCKED
+}
+
+enum PayoutStatus {
+  PROCESSING
+  PROCESSED
+}
+enum FeedbackRating {
+  POOR
+  AVERAGE
+  GOOD
+  EXCELLENT
+}
+enum TransactionType {
+  CREDIT_PURCHASE
+  BOOKING_DEDUCTION
+  BOOKING_EARNING
+  ADMIN_ADJUSTMENT
+}
+
+
+enum InterviewCategory {
+  FRONTEND
+  BACKEND
+  FULLSTACK
+  DSA
+  SYSTEM_DESIGN
+  DEVOPS
+  AI_ML
+  MOBILE
+}
+
+
+
+model User {
+  id  String @id @default(uuid())
+  clerkUserId String @unique
+  email String @unique
+  name String?
+  imageUrl String?
+  role UserRole @default(UNASSIGNED)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //interviewee-only
+  credits Int @default(0)
+  currentPlan String @default("free")
+  creditsLastAlocatedAt DateTime?
+
+  //interviewer-only
+  bio String?
+  title String?
+  yearExp Int?
+  categories InterviewCategory[]
+  creditRate Int @default(1)
+  creditBalance Int @default(0)
+
+  availabilities        Availability[]
+  bookingsAsInterviewee Booking[]           @relation("IntervieweeBookings")
+  bookingsAsInterviewer Booking[]           @relation("InterviewerBookings")
+  transactions          CreditTransaction[]
+  payouts               Payout[]
+} 
+
+model Availability {
+  id            String             @id @default(uuid())
+  interviewerId String
+  interviewer   User               @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+  startTime     DateTime
+  endTime       DateTime
+  status        AvailabilityStatus @default(AVAILABLE)
+
+  @@index([interviewerId, startTime])
+}
+
+// ─── BOOKINGS ────────────────────────────────────────────
+
+model Booking {
+  id             String        @id @default(uuid())
+  intervieweeId  String
+  interviewee    User          @relation("IntervieweeBookings", fields: [intervieweeId], references: [id])
+  interviewerId  String
+  interviewer    User          @relation("InterviewerBookings", fields: [interviewerId], references: [id])
+  startTime      DateTime
+  endTime        DateTime
+  status         BookingStatus @default(SCHEDULED)
+  creditsCharged Int
+  streamCallId   String?       @unique
+  recordingUrl   String?
+  feedback       Feedback?
+  transactions   CreditTransaction[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([interviewerId, status])
+  @@index([intervieweeId, status])
+}
+
+// ─── FEEDBACK ────────────────────────────────────────────
+
+model Feedback {
+  id             String         @id @default(uuid())
+  bookingId      String         @unique
+  booking        Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  summary        String         @db.Text
+  technical      String         @db.Text
+  communication  String         @db.Text
+  problemSolving String         @db.Text
+  recommendation String
+  strengths      String[]
+  improvements   String[]
+  overallRating  FeedbackRating
+  sessionRating  Int?
+  sessionComment String?        @db.Text
+  createdAt      DateTime       @default(now())
+}
+
+// ─── CREDIT TRANSACTIONS ─────────────────────────────────
+
+model CreditTransaction {
+  id        String          @id @default(uuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  type      TransactionType
+  bookingId String?
+  booking   Booking?        @relation(fields: [bookingId], references: [id])
+  createdAt DateTime        @default(now())
+}
+
+// ─── PAYOUTS ─────────────────────────────────────────────
+
+model Payout {
+  id            String       @id @default(uuid())
+  interviewerId String
+  interviewer   User         @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+  credits       Int
+  platformFee   Float
+  netAmount     Float
+  paymentMethod String
+  paymentDetail String
+  status        PayoutStatus @default(PROCESSING)
+  adminNote     String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  processedAt   DateTime?
+  processedBy   String?
+
+  @@index([status, createdAt])
+  @@index([interviewerId, status])
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

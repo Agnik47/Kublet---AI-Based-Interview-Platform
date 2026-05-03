@@ -119,12 +119,41 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
   }
-  body {
-    @apply bg-background text-foreground;
+}
+
+.cl-internal-b8hinb {
+  grid-template-columns: auto auto auto !important;
+}
+
+.cl-internal-1t85gwk {
+  position: relative !important;
+  z-index: 10 !important;
+}
+::-webkit-scrollbar {
+  width: 1px;
+
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
   }
-  html {
-    @apply font-sans;
+  to {
+    transform: rotate(360deg);
   }
+}
+
+.Navlogo {
+  animation: spinSlow 22s linear infinite;
+  display: inline-block;
+}
+
+.Navlogo:hover {
+  rotate: 180deg;
+  transition: rotate 0.5s ease-in-out;
 }
