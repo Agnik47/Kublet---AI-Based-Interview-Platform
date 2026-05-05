@@ -4,9 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
-
 
 // =============== ENUMS ===============
 enum UserRole {
@@ -14,11 +13,13 @@ enum UserRole {
   INTERVIEWEE
   INTERVIEWER
 }
+
 enum BookingStatus {
   SCHEDULED
   COMPLETED
   CANCELLED
 }
+
 enum AvailabilityStatus {
   AVAILABLE
   BOOKED
@@ -29,19 +30,20 @@ enum PayoutStatus {
   PROCESSING
   PROCESSED
 }
+
 enum FeedbackRating {
   POOR
   AVERAGE
   GOOD
   EXCELLENT
 }
+
 enum TransactionType {
   CREDIT_PURCHASE
   BOOKING_DEDUCTION
   BOOKING_EARNING
   ADMIN_ADJUSTMENT
 }
-
 
 enum InterviewCategory {
   FRONTEND
@@ -54,37 +56,36 @@ enum InterviewCategory {
   MOBILE
 }
 
-
-
 model User {
-  id  String @id @default(uuid())
-  clerkUserId String @unique
-  email String @unique
-  name String?
-  imageUrl String?
-  role UserRole @default(UNASSIGNED)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  clerkUserId String   @unique
+  email       String   @unique
+  name        String?
+  imageUrl    String?
+  role        UserRole @default(UNASSIGNED)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   //interviewee-only
-  credits Int @default(0)
-  currentPlan String @default("free")
+  credits               Int       @default(0)
+  currentPlan           String    @default("free")
   creditsLastAlocatedAt DateTime?
 
   //interviewer-only
-  bio String?
-  title String?
-  yearExp Int?
-  categories InterviewCategory[]
-  creditRate Int @default(1)
-  creditBalance Int @default(0)
+  bio           String?
+  title         String?
+  company       String?
+  yearExp       Int?
+  categories    InterviewCategory[]
+  creditRate    Int                 @default(1)
+  creditBalance Int                 @default(0)
 
   availabilities        Availability[]
   bookingsAsInterviewee Booking[]           @relation("IntervieweeBookings")
   bookingsAsInterviewer Booking[]           @relation("InterviewerBookings")
   transactions          CreditTransaction[]
   payouts               Payout[]
-} 
+}
 
 model Availability {
   id            String             @id @default(uuid())
@@ -100,21 +101,21 @@ model Availability {
 // ─── BOOKINGS ────────────────────────────────────────────
 
 model Booking {
-  id             String        @id @default(uuid())
+  id             String              @id @default(uuid())
   intervieweeId  String
-  interviewee    User          @relation("IntervieweeBookings", fields: [intervieweeId], references: [id])
+  interviewee    User                @relation("IntervieweeBookings", fields: [intervieweeId], references: [id])
   interviewerId  String
-  interviewer    User          @relation("InterviewerBookings", fields: [interviewerId], references: [id])
+  interviewer    User                @relation("InterviewerBookings", fields: [interviewerId], references: [id])
   startTime      DateTime
   endTime        DateTime
-  status         BookingStatus @default(SCHEDULED)
+  status         BookingStatus       @default(SCHEDULED)
   creditsCharged Int
-  streamCallId   String?       @unique
+  streamCallId   String?             @unique
   recordingUrl   String?
   feedback       Feedback?
   transactions   CreditTransaction[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   @@index([status, createdAt])
   @@index([interviewerId, status])
@@ -174,25 +175,3 @@ model Payout {
   @@index([status, createdAt])
   @@index([interviewerId, status])
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

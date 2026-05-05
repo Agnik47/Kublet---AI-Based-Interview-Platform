@@ -1,11 +1,11 @@
 "use server";
 
-import { createRateLimiter } from "@/lib/arcjet";
+import { checkRateLimit, createRateLimiter } from "@/lib/arcjet";
 import { db } from "@/lib/prisma";
 import { request } from "@arcjet/next";
 import { currentUser } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
 import { StreamClient } from "@stream-io/node-sdk";
-
 
 // *5 booking attempts per hour — generous enough for real users,
 // !tight enough to block automated abuse
@@ -14,11 +14,11 @@ const bookingLimiter = createRateLimiter({
   interval: "1h",
   capacity: 5,
 });
-    
+
 //! Get Interviewer Profile
 export const getInterviewerProfile = async (interviewerId) => {
   try {
-    const interviewer = await db.user.findUnique({
+    const interviewer = await db.user.findFirst({
       where: {
         id: interviewerId,
         role: "INTERVIEWER",
@@ -43,7 +43,7 @@ export const getInterviewerProfile = async (interviewerId) => {
           take: 1,
         },
 
-        bookingAsInterviewer: {
+        bookingsAsInterviewer: {
           where: { status: "SCHEDULED" },
           select: {
             startTime: true,
@@ -63,7 +63,7 @@ export const getInterviewerProfile = async (interviewerId) => {
 // ============================
 // Book Slot
 // ============================
-export const getBookSlot = async ({ interviewerId, startTime, endTime }) => {
+export const bookSlot = async ({ interviewerId, startTime, endTime }) => {
   try {
     const user = await currentUser();
 
@@ -72,12 +72,11 @@ export const getBookSlot = async ({ interviewerId, startTime, endTime }) => {
     }
 
     //! Arcjet Rate Limiter
-    const req =  await request();
+    const req = await request();
     const rateLimitError = await checkRateLimit(bookingLimiter, req, user.id);
     if (rateLimitError) {
       throw new Error(rateLimitError);
     }
-
 
     // Fetch both users in parallel
     const [dbUser, interviewer] = await Promise.all([
@@ -125,7 +124,7 @@ export const getBookSlot = async ({ interviewerId, startTime, endTime }) => {
     try {
       const streamClient = new StreamClient(
         process.env.NEXT_PUBLIC_STREAM_API_KEY,
-        process.env.STREAM_SECRET_KEY
+        process.env.STREAM_SECRET_KEY,
       );
 
       await streamClient.upsertUsers([
@@ -180,7 +179,8 @@ export const getBookSlot = async ({ interviewerId, startTime, endTime }) => {
     //! Booking Transaction
     // ============================
     try {
-      const booking = await db.$transaction(async (tx) => { //?why we use $transation baki jaga to db.something likhete hai
+      const booking = await db.$transaction(async (tx) => {
+        //?why we use $transation baki jaga to db.something likhete hai
         const newBooking = await tx.booking.create({
           data: {
             intervieweeId: dbUser.id,
@@ -221,13 +221,14 @@ export const getBookSlot = async ({ interviewerId, startTime, endTime }) => {
         return newBooking;
       });
 
-      // Revalidation 
+      // Revalidation
       revalidatePath(`/interviewers/${interviewerId}`);
       revalidatePath("/dashboard");
 
       return booking;
     } catch (error) {
       console.error(error);
+      if (error instanceof Error) throw error;
       throw new Error("Failed to book slot");
     }
   } catch (error) {

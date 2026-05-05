@@ -1,6 +1,6 @@
 'use client';;
 import * as React from 'react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/theme-provider';
 
 import { CodeBlock as CodeBlockPrimitive } from '@/components/animate-ui/primitives/animate/code-block';
 import { cn } from '@/lib/utils';
