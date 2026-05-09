@@ -13,6 +13,9 @@ const isProtectedRoute = createRouteMatcher([
   "/onboarding(.*)",
 ]);
 
+// Trusted external webhooks — skip Arcjet entirely
+const isWebhookRoute = createRouteMatcher(["/api/webhooks/stream(.*)"]);
+
 const arcjetClient = arcjet({
   key: process.env.ARCJET_KEY,
   rules: [
@@ -25,6 +28,14 @@ const arcjetClient = arcjet({
 });
 
 const clerkProxy = clerkMiddleware(async (auth, req) => {
+  // Skip Arcjet for trusted webhook routes
+  if (!isWebhookRoute(req)) {
+    const decision = await arcjetClient.protect(req);
+    if (decision.isDenied()) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
   const { userId, redirectToSignIn } = await auth();
 
   if (!userId && isProtectedRoute(req)) {

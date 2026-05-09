@@ -11,26 +11,26 @@ const AppointmentPage = async () => {
   const now = new Date();
 
   const scheduled = appointments.filter(
-    (a)=> a.status === "SCHEDULED" && new Date(a.startTime) > now,
+    (a) => a.status === "SCHEDULED" && new Date(a.startTime) > now,
   );
 
   const past = appointments.filter(
-    (a)=> a.status === "SCHEDULED" && new Date(a.startTime) <= now,
+    (a) => a.status !== "CANCELLED" && new Date(a.startTime) <= now,
   );
 
-  return <main className="w-full min-h-black ">
-     <PageHeader
-       label="My Appoitments"
-       gray="Your Interviws"
-       gold="sessions"
-       description="All your upcoming and past interviews in one place"
-     />
+  return (
+    <main className="w-full min-h-black ">
+      <PageHeader
+        label="My Appoitments"
+        gray="Your Interviws"
+        gold="sessions"
+        description="All your upcoming and past interviews in one place"
+      />
 
-     <div className="max-w-6xl mx-auto px-8 lg:px-0 py-8 flex flex-col gap-14">
-
+      <div className="max-w-6xl mx-auto px-8 lg:px-0 py-8 flex flex-col gap-14">
         {/* Lett's make the Empty page */}
 
-       {appointments.length === 0 && (
+        {appointments.length === 0 && (
           <div className="flex flex-col items-center justify-center py-28 gap-5 text-center border border-white/10 rounded-2xl">
             <span className="w-16 h-16 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-3xl">
               <CalendarDays size={28} className="text-amber-400" />
@@ -48,7 +48,6 @@ const AppointmentPage = async () => {
             </Button>
           </div>
         )}
-
 
         {/* Upcoming */}
         {scheduled.length > 0 && (
@@ -89,8 +88,9 @@ const AppointmentPage = async () => {
             </div>
           </div>
         )}
-     </div>
-  </main>;
+      </div>
+    </main>
+  );
 };
 
 export default AppointmentPage;

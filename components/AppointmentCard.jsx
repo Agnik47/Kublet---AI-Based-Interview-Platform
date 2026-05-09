@@ -1,14 +1,17 @@
 "use client";
 import React, { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Badge, Calendar, Clock, Sparkles, Video } from "lucide-react";
-import { STATUS_STYLES } from "@/lib/data";
+import { Badge } from "./ui/badge";
+import { Calendar, Clock, Sparkles, Video } from "lucide-react";
+import { RATING_LABEL, RATING_STYLES, STATUS_STYLES } from "@/lib/data";
 import { formatDate, formatDuration, formatTime } from "@/lib/helpers";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { FeedbackModal } from "./FeedbackModal";
 
 const AppointmentCard = ({ booking, mode, isPast = false }) => {
+  const { has } = useAuth();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const {
@@ -27,7 +30,7 @@ const AppointmentCard = ({ booking, mode, isPast = false }) => {
   const creditsLabel =
     mode === "interviewer"
       ? `${creditsCharged} earned`
-      : `${creditsCharged} spent`;
+      : `-${creditsCharged} spent`;
 
   const creditsStyle =
     mode === "interviewer"
@@ -151,6 +154,18 @@ const AppointmentCard = ({ booking, mode, isPast = false }) => {
             </p>
             <p className="text-xs text-stone-400 font-light leading-relaxed line-clamp-2">
               {feedback.summary}
+            </p>
+          </div>
+        )}
+
+        {recordingUrl && !feedback && isPast && (
+          <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 flex flex-col gap-1.5">
+            <p className="text-[10px] font-semibold text-amber-400 tracking-widest uppercase">
+              Processing Feedback
+            </p>
+            <p className="text-xs text-amber-300/70 font-light leading-relaxed">
+              Your recording has been saved. AI analysis and transcription will
+              be available shortly.
             </p>
           </div>
         )}
