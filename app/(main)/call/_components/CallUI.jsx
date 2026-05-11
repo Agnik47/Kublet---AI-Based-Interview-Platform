@@ -151,7 +151,7 @@ const CallUI = ({
             </button>
 
             {/* AI Questions tab — interviewer only */}
-            {true && (
+            {isInterviewer && (
               <button
                 type="button"
                 onClick={() => setActiveTab("ai")}
@@ -162,7 +162,7 @@ const CallUI = ({
                 }`}
               >
                 <Sparkles size={13} />
-                AI Questions
+                AI Questions  
               </button>
             )}
           </div>

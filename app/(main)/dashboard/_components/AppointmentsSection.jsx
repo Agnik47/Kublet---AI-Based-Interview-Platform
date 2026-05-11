@@ -10,7 +10,7 @@ export default function AppointmentsSection({ appointments }) {
     (a) => a.status === "SCHEDULED" && new Date(a.startTime) > now,
   );
   const past = appointments.filter(
-    (a) => a.status !== "SCHEDULED" || new Date(a.endTime) <= now,
+    (a) => a.status !== "SCHEDULED" || new Date(a.startTime) <= now,
   );
 
   return (

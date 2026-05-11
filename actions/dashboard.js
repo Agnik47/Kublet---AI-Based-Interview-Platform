@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { db } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
@@ -211,4 +211,43 @@ export const getWithdrawalHistory = async () => {
     where: { interviewerId: dbUser.id },
     orderBy: { createdAt: "desc" },
   });
+
 };
+export const updateProfile = async ({
+  title,
+  company,
+  yearExp,
+  bio,
+  categories,
+}) => {
+  const user = await currentUser();
+  if (!user) throw new Error('Unauthorized');
+
+  const dbUser = await db.user.findUnique({ where: { clerkUserId: user.id } });
+  if (!dbUser || dbUser.role !== 'INTERVIEWER') throw new Error('Forbidden');
+
+  if (!title?.trim() || !company?.trim() || !bio?.trim() || !categories?.length) {
+    throw new Error('All fields are required');
+  }
+
+  try {
+    await db.user.update({
+      where: { id: dbUser.id },
+      data: {
+        title: title.trim(),
+        company: company.trim(),
+        yearExp: Number(yearExp),
+        bio: bio.trim(),
+        categories,
+      },
+    });
+
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (err) {
+    console.error(err);
+    throw new Error('Failed to update profile');
+  }
+};
+
+
