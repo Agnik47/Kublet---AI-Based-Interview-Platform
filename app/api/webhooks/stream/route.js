@@ -16,7 +16,7 @@ export async function POST(request) {
   const callCid = body.call_cid ?? "";
 
   const streamCallId = callCid.includes(":")
-    ? callCid.split(":")[1]
+    ? callCid.split(":").pop()
     : callCid;
 
   if (!streamCallId) {
