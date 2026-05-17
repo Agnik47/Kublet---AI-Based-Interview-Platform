@@ -102,8 +102,8 @@ const CallUI = ({
   }
   return (
     <div className="min-h-[92vh] bg-[#0a0a0b] rounded-2xl flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-3 border-b border-white/8 shrink-0">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 py-3 border-b border-white/8 shrink-0 gap-2 sm:gap-0">
+        <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2">
           <Badge
             variant="outline"
             className="border-white/10 text-stone-500 text-xs"
@@ -124,9 +124,9 @@ const CallUI = ({
       </div>
 
       {/* Body: video + side panel */}
-      <div className="flex flex-1 min-h-0 bg-[#0a0a0b] overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 bg-[#0a0a0b] overflow-hidden">
         {/* ── LEFT: Video ── */}
-        <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex flex-col flex-1 min-w-0 min-h-[40vh] lg:min-h-0">
           <StreamTheme>
             <SpeakerLayout participantBarPosition="bottom" />
             <CallControls onLeave={handleLeave} />
@@ -134,7 +134,7 @@ const CallUI = ({
         </div>
 
         {/* ── RIGHT: Chat / AI panel ── */}
-        <div className="w-85 shrink-0 flex flex-col border-l border-white/8 bg-[#0a0a0b]">
+        <div className="w-full lg:w-85 h-[45vh] lg:h-auto shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/8 bg-[#0a0a0b]">
           {/* Tab switcher */}
           <div className="flex border-b border-white/8 shrink-0">
             <button
