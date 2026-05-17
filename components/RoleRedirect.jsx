@@ -6,8 +6,8 @@ const RoleRedirect = ({ role }) => {
 
     const pathname = usePathname();
     const router = useRouter()
-    const INTERVIEWER_ONLY = ["/appointments"];
-    const INTERVIEWEE_ONLY = ["/dashboard"];
+    const INTERVIEWER_RESTRICTED = ["/appointments", "/explore"];
+    const INTERVIEWEE_RESTRICTED = ["/dashboard"];
 
     useEffect(() => {
         if (role === "UNASSIGNED" && pathname !== "/onboarding")
@@ -19,12 +19,12 @@ const RoleRedirect = ({ role }) => {
             router.replace("/explore");
         if (
             role === "INTERVIEWER" &&
-            INTERVIEWER_ONLY.some((p) => pathname.startsWith(p))
+            INTERVIEWER_RESTRICTED.some((p) => pathname.startsWith(p))
         )
             router.replace("/dashboard");
         if (
             role === "INTERVIEWEE" &&
-            INTERVIEWEE_ONLY.some((p) => pathname.startsWith(p))
+            INTERVIEWEE_RESTRICTED.some((p) => pathname.startsWith(p))
         )
             router.replace("/appointments");
 

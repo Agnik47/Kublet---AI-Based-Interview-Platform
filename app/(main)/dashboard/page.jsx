@@ -61,19 +61,18 @@ const AdminDashBoadPage = async () => {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
         <Tabs defaultValue="earnings">
-          <TabsList className="grid grid-cols-2 md:flex md:flex-row bg-[#0f0f11] border border-white/10 mb-8 w-full h-auto p-1 gap-1">
-            <TabsTrigger value="availability" className="py-3 px-2 md:p-5 text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
-              <Clock size={16} className="text-amber-400 shrink-0" /> <span className="truncate">Availability</span>
+          <TabsList className="flex flex-row overflow-x-auto hide-scrollbar bg-[#0f0f11] border border-white/10 mb-8 w-full h-auto p-1.5 gap-1.5 justify-start lg:justify-center rounded-xl scroll-smooth">
+            <TabsTrigger value="earnings" className="py-2.5 px-4 md:py-3 md:px-6 text-sm font-medium flex items-center justify-center gap-2 rounded-lg whitespace-nowrap transition-all data-[state=active]:bg-white/10 data-[state=active]:text-amber-400">
+              <Wallet size={16} className="text-amber-400 shrink-0" /> Earnings
             </TabsTrigger>
-            <TabsTrigger value="appointments" className="py-3 px-2 md:p-5 text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
-              <ClipboardList size={16} className="text-amber-400 shrink-0" />{" "}
-              <span className="truncate">Appointments</span>
+            <TabsTrigger value="appointments" className="py-2.5 px-4 md:py-3 md:px-6 text-sm font-medium flex items-center justify-center gap-2 rounded-lg whitespace-nowrap transition-all data-[state=active]:bg-white/10 data-[state=active]:text-amber-400">
+              <ClipboardList size={16} className="text-amber-400 shrink-0" /> Appointments
             </TabsTrigger>
-            <TabsTrigger value="earnings" className="py-3 px-2 md:p-5 text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
-              <Wallet size={14} className="text-amber-400 shrink-0" /> <span className="truncate">Earnings</span>
+            <TabsTrigger value="availability" className="py-2.5 px-4 md:py-3 md:px-6 text-sm font-medium flex items-center justify-center gap-2 rounded-lg whitespace-nowrap transition-all data-[state=active]:bg-white/10 data-[state=active]:text-amber-400">
+              <Clock size={16} className="text-amber-400 shrink-0" /> Availability
             </TabsTrigger>
-            <TabsTrigger value="settings" className="py-3 px-2 md:p-5 text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
-              <Settings size={16} className="text-amber-400 shrink-0" /> <span className="truncate">Settings</span>
+            <TabsTrigger value="settings" className="py-2.5 px-4 md:py-3 md:px-6 text-sm font-medium flex items-center justify-center gap-2 rounded-lg whitespace-nowrap transition-all data-[state=active]:bg-white/10 data-[state=active]:text-amber-400">
+              <Settings size={16} className="text-amber-400 shrink-0" /> Settings
             </TabsTrigger>
           </TabsList>
 

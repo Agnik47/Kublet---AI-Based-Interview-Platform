@@ -181,7 +181,7 @@ const AppointmentCard = ({ booking, mode, isPast = false }) => {
               </Button>
             )}
 
-            {recordingUrl && has?.({ plan: "pro" }) && (
+            {recordingUrl && (
               <Button variant="outline" size="sm" className="gap-2" asChild>
                 <a
                   href={recordingUrl}
@@ -193,8 +193,7 @@ const AppointmentCard = ({ booking, mode, isPast = false }) => {
               </Button>
             )}
 
-            {feedback &&
-              (has?.({ plan: "starter" }) || has?.({ plan: "pro" })) && (
+            {feedback && (
                 <>
                   <Button
                     variant="outline"
