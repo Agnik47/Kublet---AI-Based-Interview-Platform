@@ -1,8 +1,9 @@
-﻿"use server";
+"use server";
 
 import { db } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { sendWithdrawalEmail } from "@/lib/mail";
 
 const ADMIN_EMAIL = "realagnik.roni.2004@gmail.com";
 
@@ -169,24 +170,15 @@ export const requestWithdrawal = async ({
 
     // Fire admin email — non-blocking, failure won't affect the user
     try {
-      const reviewUrl = `${process.env.NEXT_PUBLIC_APP_URL}/payout/${payout.id}`;
-      const html = await render(
-        WithdrawalRequestEmail({
-          interviewerName: dbUser.name ?? "Unknown",
-          interviewerEmail: dbUser.email,
-          credits,
-          platformFee,
-          netAmount,
-          paymentMethod,
-          paymentDetail,
-          reviewUrl,
-        })
-      );
-      await resend.emails.send({
-        from: "Prept <onboarding@resend.dev>",
-        to: ADMIN_EMAIL,
-        subject: `Withdrawal Request — ${dbUser.name} · ${credits} credits`,
-        html,
+      await sendWithdrawalEmail({
+        interviewerName: dbUser.name ?? "Unknown",
+        interviewerEmail: dbUser.email,
+        credits,
+        platformFee,
+        netAmount,
+        paymentMethod,
+        paymentDetail,
+        payoutId: payout.id,
       });
     } catch (emailErr) {
       console.error("Withdrawal email failed:", emailErr);

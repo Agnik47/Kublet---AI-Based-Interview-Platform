@@ -6,6 +6,7 @@ import { request } from "@arcjet/next";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { StreamClient } from "@stream-io/node-sdk";
+import { sendBookingEmails } from "@/lib/mail";
 
 // *5 booking attempts per hour — generous enough for real users,
 // !tight enough to block automated abuse
@@ -224,6 +225,17 @@ export const bookSlot = async ({ interviewerId, startTime, endTime }) => {
       // Revalidation
       revalidatePath(`/interviewers/${interviewerId}`);
       revalidatePath("/dashboard");
+
+      // Send booking confirmation emails in background
+      try {
+        await sendBookingEmails({
+          booking,
+          interviewee: dbUser,
+          interviewer,
+        });
+      } catch (emailErr) {
+        console.error("Booking email dispatch failed:", emailErr);
+      }
 
       return booking;
     } catch (error) {
