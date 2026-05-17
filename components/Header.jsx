@@ -11,8 +11,8 @@ import RoleRedirect from './RoleRedirect'
 const Header = async () => {
   const user = await checkUser();
   return (
-    <div className='fixed top-0 flex justify-between items-center w-full inset-x-0 z-50 px-3 sm:px-10 py-3 border-b border-white/7 backdrop-blur-xl' >
-        <Link href="/" className='flex gap-3 items-center justify-between'>
+    <header className='fixed top-0 left-0 right-0 z-50 px-4 sm:px-10 py-3 border-b border-white/7 backdrop-blur-xl flex justify-between items-center bg-black/60' >
+        <Link href="/" className='flex gap-3 items-center justify-between shrink-0'>
         <Image
           src="/logo3.png"
           alt="Logo"
@@ -69,7 +69,7 @@ const Header = async () => {
               <UserButton />
             </Show>
       </div>
-    </div>
+    </header>
   )
 }
 

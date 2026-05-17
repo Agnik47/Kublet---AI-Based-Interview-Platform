@@ -14,9 +14,23 @@ import React from "react";
 import SlotPicker from "../_components/SlotPicker";
 import { getCurrentUser } from "@/actions/user";
 
+const PLAN_RANK = {
+  free: 0,
+  starter: 1,
+  pro: 2,
+};
+
+const FEATURE_PLANS = {
+  "HD Video Call": "free",
+  "Persistent Chat": "free",
+  "AI Question Generator": "starter",
+  "AI Feedback Report": "starter",
+  "Recording & Playback": "pro",
+};
+
 const interviewerProfilePage = async ({ params }) => {
   const { id } = await params;
-  console.log(id);
+  //console.log(id);
 
   const user = await currentUser();
   if (!user) redirect("/");
@@ -143,21 +157,55 @@ const interviewerProfilePage = async ({ params }) => {
               </p>
             </div>
             <ul className="flex flex-col gap-5">
-              {EXPECT_ITEMS.map(([icon, title, desc]) => (
-                <li key={title} className="flex items-start gap-4">
-                  <span className="mt-0.5 w-10 h-10 shrink-0 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-lg">
-                    {icon}
-                  </span>
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-sm font-medium text-stone-200">
-                      {title}
-                    </p>
-                    <p className="text-xs text-stone-500 font-light leading-relaxed">
-                      {desc}
-                    </p>
-                  </div>
-                </li>
-              ))}
+              {EXPECT_ITEMS.map(([icon, title, desc]) => {
+                const requiredPlan = FEATURE_PLANS[title] || "free";
+                const userPlan = dbUser.currentPlan?.toLowerCase() || "free";
+                const isUnlocked = PLAN_RANK[userPlan] >= PLAN_RANK[requiredPlan];
+
+                return (
+                  <li
+                    key={title}
+                    className={`flex items-start gap-4 transition-all duration-300 ${
+                      isUnlocked ? "" : "opacity-45 select-none"
+                    }`}
+                  >
+                    <span
+                      className={`mt-0.5 w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-lg border transition-all duration-300 ${
+                        isUnlocked
+                          ? "bg-amber-400/10 border-amber-400/20 text-amber-400"
+                          : "bg-stone-900 border-white/5 text-stone-600"
+                      }`}
+                    >
+                      {isUnlocked ? icon : "🔒"}
+                    </span>
+                    <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p
+                          className={`text-sm font-medium transition-colors ${
+                            isUnlocked
+                              ? "text-stone-200"
+                              : "text-stone-500 line-through decoration-stone-700/60"
+                          }`}
+                        >
+                          {title}
+                        </p>
+                        {!isUnlocked && (
+                          <span className="text-[9px] tracking-wider uppercase font-semibold px-2 py-0.5 rounded-sm bg-amber-400/10 border border-amber-400/20 text-amber-400 leading-none">
+                            Requires {requiredPlan === "pro" ? "Pro" : "Starter"}
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className={`text-xs font-light leading-relaxed transition-colors ${
+                          isUnlocked ? "text-stone-400" : "text-stone-600"
+                        }`}
+                      >
+                        {desc}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>

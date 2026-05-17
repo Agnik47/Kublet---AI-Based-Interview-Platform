@@ -27,21 +27,25 @@ export const SectionHeading = ({ gray, gold }) => (
 
 export default function PageHeader({ label, gray, gold, description, right }) {
   return (
-    <div className="border-b border-white/8 px-8 py-10">
-      <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-        <div>
+    <div className="border-b border-white/8 px-6 sm:px-8 py-8 sm:py-10">
+      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="min-w-0">
           {label && <SectionLabel>{label}</SectionLabel>}
-          <h1 className="font-serif text-5xl tracking-tight mt-1">
+          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl tracking-tight mt-1 leading-[1.1] sm:leading-none">
             {gray && <GrayTitle>{gray} </GrayTitle>}
             {gold && <GoldTitle>{gold}</GoldTitle>}
           </h1>
           {description && (
-            <p className="text-sm text-stone-500 font-light mt-2">
+            <p className="text-xs sm:text-sm text-stone-500 font-light mt-2 truncate">
               {description}
             </p>
           )}
         </div>
-        {right && <div className="shrink-0">{right}</div>}
+        {right && (
+          <div className="shrink-0 w-full sm:w-auto text-left sm:text-right">
+            {right}
+          </div>
+        )}
       </div>
     </div>
   );

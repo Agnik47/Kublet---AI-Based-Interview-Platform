@@ -76,7 +76,7 @@ export default function EarningsSection({ stats, history }) {
   return (
     <section className="flex flex-col gap-6">
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           {
             label: "Credit balance",
@@ -104,11 +104,11 @@ export default function EarningsSection({ stats, history }) {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="bg-[#0f0f11] border border-white/10 rounded-2xl p-6 flex flex-col gap-2"
+            className="bg-[#0f0f11] border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col gap-2"
           >
             <span className="text-lg">{stat.icon}</span>
             <p
-              className={`font-serif text-4xl leading-none tracking-tight ${
+              className={`font-serif text-3xl sm:text-4xl leading-none tracking-tight ${
                 stat.gold
                   ? "bg-linear-to-br from-amber-300 to-amber-500 bg-clip-text text-transparent"
                   : "bg-linear-to-br from-stone-100 to-stone-400 bg-clip-text text-transparent"
@@ -116,9 +116,9 @@ export default function EarningsSection({ stats, history }) {
             >
               {stat.value}
             </p>
-            <p className="text-xs text-stone-600">{stat.unit}</p>
+            <p className="text-[11px] text-stone-600 leading-none">{stat.unit}</p>
 
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-stone-500 leading-tight">
               {stat.label}{" "}
               {stat.dollarValue !== undefined
                 ? `($${stat?.dollarValue?.toFixed(2)})`
@@ -129,7 +129,7 @@ export default function EarningsSection({ stats, history }) {
       </div>
 
       {/* Withdrawal trigger card */}
-      <div className="bg-[#0f0f11] border border-white/10 rounded-2xl p-8 flex items-center justify-between gap-4">
+      <div className="bg-[#0f0f11] border border-white/10 rounded-2xl p-5 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div>
           <h2 className="font-serif text-xl tracking-tight">
             <GrayTitle>Withdraw earnings</GrayTitle>
@@ -142,15 +142,15 @@ export default function EarningsSection({ stats, history }) {
           variant="gold"
           disabled={balance <= 0}
           onClick={() => setOpen(true)}
-          className="shrink-0"
+          className="shrink-0 w-full sm:w-auto"
         >
           Request withdrawal
         </Button>
       </div>
 
       {/* Withdrawal history */}
-      <div className="bg-[#0f0f11] border border-white/10 rounded-2xl p-8">
-        <div className="flex items-center justify-between gap-4">
+      <div className="bg-[#0f0f11] border border-white/10 rounded-2xl p-5 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold text-stone-500 tracking-widest uppercase">
               Withdrawal history

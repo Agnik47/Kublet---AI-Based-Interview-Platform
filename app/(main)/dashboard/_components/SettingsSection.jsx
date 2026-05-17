@@ -60,9 +60,9 @@ export default function SettingsSection({ initial }) {
     form.categories.length > 0;
 
   return (
-    <section className="bg-[#0f0f11] border border-white/10 rounded-2xl p-8 flex flex-col gap-7">
+    <section className="bg-[#0f0f11] border border-white/10 rounded-2xl p-5 sm:p-8 flex flex-col gap-7">
       {/* Header */}
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <span className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-lg mb-4">
             <Settings size={18} className="text-amber-400" />

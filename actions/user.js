@@ -21,6 +21,7 @@ export const getCurrentUser = async () => {
       bio: true,
       categories: true,
       imageUrl: true,
+      currentPlan: true,
     },
   });
 };

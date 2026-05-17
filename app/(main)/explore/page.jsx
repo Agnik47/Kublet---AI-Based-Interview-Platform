@@ -2,8 +2,16 @@ import PageHeader, { GoldTitle, SectionHeading, SectionLabel } from '@/component
 import React from 'react'
 import ExploreGrid from './components/ExploreGrid'
 import { getInterviewers } from '@/actions/explore'
+import { getCurrentUser } from '@/actions/user'
+import { redirect } from 'next/navigation'
 
 const ExplorePage = async () => {
+  const dbUser = await getCurrentUser();
+  if (!dbUser) redirect("/");
+
+  if (dbUser.role === "INTERVIEWER") {
+    redirect("/dashboard");
+  }
 
   const interviewers = await getInterviewers();
   return (

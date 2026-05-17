@@ -57,7 +57,7 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning
         suppressContentEditableWarning
       >
-        <body className={` ${lora.variable} ${dmSans.variable} min-h-full bg-black  flex flex-col`}>
+        <body className={` ${lora.variable} ${dmSans.variable} min-h-full bg-black flex flex-col overflow-x-hidden`}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

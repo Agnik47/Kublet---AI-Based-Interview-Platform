@@ -41,9 +41,9 @@ const AdminDashBoadPage = async () => {
             : undefined
         }
         right={
-          <div>
+          <div className="text-left sm:text-right">
             <p className="text-xs text-stone-600">Credit balance</p>
-            <p className="font-serif text-3xl leading-none bg-linear-to-br from-amber-300 to-amber-500 bg-clip-text text-transparent text-right">
+            <p className="font-serif text-3xl leading-none bg-linear-to-br from-amber-300 to-amber-500 bg-clip-text text-transparent mt-1">
               {stats?.creditBalance ?? 0}
             </p>
           </div>
@@ -56,24 +56,24 @@ const AdminDashBoadPage = async () => {
           mouseGravity="repel"
           starsOpacity={0.25}
           glowAnimation="spring"
-        />
+         />
       </div>
 
-      <div className="max-w-6xl mx-auto px-8 py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
         <Tabs defaultValue="earnings">
-          <TabsList className="bg-[#0f0f11] border border-white/10 mb-8 w-full">
-            <TabsTrigger value="availability" className="p-5">
-              <Clock size={18} className="text-amber-400" /> Availability
+          <TabsList className="grid grid-cols-2 md:flex md:flex-row bg-[#0f0f11] border border-white/10 mb-8 w-full h-auto p-1 gap-1">
+            <TabsTrigger value="availability" className="py-3 px-2 md:p-5 text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
+              <Clock size={16} className="text-amber-400 shrink-0" /> <span className="truncate">Availability</span>
             </TabsTrigger>
-            <TabsTrigger value="appointments" className="p-5">
-              <ClipboardList size={18} className="text-amber-400" />{" "}
-              Appointments
+            <TabsTrigger value="appointments" className="py-3 px-2 md:p-5 text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
+              <ClipboardList size={16} className="text-amber-400 shrink-0" />{" "}
+              <span className="truncate">Appointments</span>
             </TabsTrigger>
-            <TabsTrigger value="earnings" className="p-5">
-              <Wallet size={16} className="text-amber-400" /> Earnings
+            <TabsTrigger value="earnings" className="py-3 px-2 md:p-5 text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
+              <Wallet size={14} className="text-amber-400 shrink-0" /> <span className="truncate">Earnings</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="p-5">
-              <Settings size={18} className="text-amber-400" /> Settings
+            <TabsTrigger value="settings" className="py-3 px-2 md:p-5 text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
+              <Settings size={16} className="text-amber-400 shrink-0" /> <span className="truncate">Settings</span>
             </TabsTrigger>
           </TabsList>
 
