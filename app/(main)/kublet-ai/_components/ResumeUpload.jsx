@@ -3,7 +3,7 @@
 import React, { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, Sparkles, FileText, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, Sparkles, FileText, X, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -12,6 +12,9 @@ export default function ResumeUpload() {
   const [file, setFile] = useState(null);
   const [error, setError] = useState(null);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [extractedText, setExtractedText] = useState("");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   const formatFileSize = (bytes) => {
@@ -24,6 +27,8 @@ export default function ResumeUpload() {
 
   const validateAndSetFile = (selectedFile) => {
     setError(null);
+    setExtractedText("");
+    setIsPreviewOpen(false);
 
     if (!selectedFile) return;
 
@@ -41,6 +46,7 @@ export default function ResumeUpload() {
   };
 
   const handleDrag = (e) => {
+    if (isLoading) return;
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -51,6 +57,7 @@ export default function ResumeUpload() {
   };
 
   const handleDrop = (e) => {
+    if (isLoading) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragActive(false);
@@ -61,21 +68,79 @@ export default function ResumeUpload() {
   };
 
   const handleFileChange = (e) => {
+    if (isLoading) return;
     if (e.target.files && e.target.files[0]) {
       validateAndSetFile(e.target.files[0]);
     }
   };
 
   const handleButtonClick = () => {
+    if (isLoading) return;
     fileInputRef.current?.click();
   };
 
   const handleRemoveFile = (e) => {
     e.stopPropagation();
+    if (isLoading) return;
     setFile(null);
     setError(null);
+    setExtractedText("");
+    setIsPreviewOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!file || isLoading) return;
+
+    setIsLoading(true);
+    setError(null);
+    setExtractedText("");
+    setIsPreviewOpen(false);
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+
+      // Dynamically load local pdfjs-dist
+      const pdfjs = await import("pdfjs-dist");
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        "pdfjs-dist/build/pdf.worker.min.mjs",
+        import.meta.url
+      ).toString();
+
+      // Load PDF document
+      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+
+      let text = "";
+
+      // Extract text from all pages
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item) => item.str).join(" ");
+        text += pageText + "\n";
+      }
+
+      const trimmedText = text.trim();
+
+      if (trimmedText.length === 0) {
+        setError("Empty extraction. We couldn't find any selectable text in the PDF. Please check if it's a scanned file or image.");
+      } else {
+        setExtractedText(trimmedText);
+        setIsPreviewOpen(true); // Open the preview on success
+      }
+    } catch (err) {
+      console.error("PDF Parsing Error:", err);
+      // Determine if error is an invalid PDF format error
+      if (err.name === "InvalidPDFException" || err.message?.includes("Invalid PDF")) {
+        setError("Invalid PDF format. The file is corrupt or is not a valid PDF document.");
+      } else {
+        setError("Parsing failure. An unexpected error occurred while extracting the text.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -89,7 +154,7 @@ export default function ResumeUpload() {
             Upload Your Resume
           </CardTitle>
           <CardDescription className="text-sm text-stone-400 max-w-md mx-auto">
-            Upload your professional resume in PDF format (max {MAX_FILE_SIZE_MB}MB) to customize your adaptive mock interview.
+            Upload your professional resume in PDF format (max {MAX_FILE_SIZE_MB}MB) to extract text and prepare your mock interview.
           </CardDescription>
         </CardHeader>
 
@@ -100,6 +165,7 @@ export default function ResumeUpload() {
             type="file"
             accept="application/pdf"
             onChange={handleFileChange}
+            disabled={isLoading}
             className="hidden"
           />
 
@@ -143,17 +209,20 @@ export default function ResumeUpload() {
                 <button
                   onClick={handleRemoveFile}
                   type="button"
-                  className="p-1.5 rounded-lg border border-white/5 bg-white/5 text-stone-400 hover:text-red-400 hover:bg-red-400/10 transition-all cursor-pointer"
+                  disabled={isLoading}
+                  className="p-1.5 rounded-lg border border-white/5 bg-white/5 text-stone-400 hover:text-red-400 hover:bg-red-400/10 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <X size={16} />
                 </button>
               </div>
 
               {/* Upload Success Alert */}
-              <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium justify-center py-1">
-                <CheckCircle2 size={14} className="shrink-0" />
-                Resume uploaded successfully! Ready for analysis.
-              </div>
+              {!extractedText && !error && (
+                <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium justify-center py-1">
+                  <CheckCircle2 size={14} className="shrink-0" />
+                  Resume selected successfully! Ready to extract.
+                </div>
+              )}
             </div>
           )}
 
@@ -166,16 +235,61 @@ export default function ResumeUpload() {
           )}
 
           {/* Analyze Button */}
-          <div className="w-full pt-2">
-            <Button
-              disabled
-              variant="gold"
-              className="w-full py-6 text-sm font-medium flex items-center justify-center gap-2 opacity-60 cursor-not-allowed select-none bg-amber-400 hover:bg-amber-400 text-black border-none"
-            >
-              <Sparkles size={16} />
-              Coming in Next Feature
-            </Button>
-          </div>
+          {file && !extractedText && (
+            <div className="w-full pt-2">
+              <Button
+                onClick={handleAnalyze}
+                disabled={isLoading}
+                variant="gold"
+                className="w-full py-6 text-sm font-medium flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-black border-none"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Extracting Text...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    Analyze Resume
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Collapsible Preview Section */}
+          {extractedText && (
+            <div className="w-full mt-2 border border-emerald-500/20 bg-emerald-500/5 rounded-xl overflow-hidden text-left transition-all duration-300">
+              {/* Header Toggle */}
+              <button
+                onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                type="button"
+                className="w-full flex items-center justify-between p-4 hover:bg-emerald-500/10 transition-colors duration-200 cursor-pointer"
+              >
+                <div className="flex items-center gap-2 text-emerald-400 font-medium text-sm">
+                  <CheckCircle2 size={16} />
+                  <span>Resume Extracted Successfully</span>
+                </div>
+                <span className="text-xs text-stone-400 font-mono">
+                  {isPreviewOpen ? "Hide Preview ▲" : "Show Preview ▼"}
+                </span>
+              </button>
+
+              {/* Collapsible Content */}
+              {isPreviewOpen && (
+                <div className="p-4 border-t border-emerald-500/10 font-mono text-xs text-stone-300 bg-black/40">
+                  <p className="text-stone-500 mb-2 font-sans text-xs">
+                    PREVIEW (First {Math.min(extractedText.length, 1200)} characters):
+                  </p>
+                  <div className="whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed hide-scrollbar select-text selection:bg-amber-400/20">
+                    {extractedText.substring(0, 1200)}
+                    {extractedText.length > 1200 && "..."}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
