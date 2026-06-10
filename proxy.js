@@ -11,6 +11,7 @@ const isProtectedRoute = createRouteMatcher([
   "/explore(.*)",
   "/dashboard(.*)",
   "/onboarding(.*)",
+  "/kublet-ai(.*)",
 ]);
 
 // Trusted external webhooks — skip Arcjet entirely

@@ -4,7 +4,7 @@ import React from 'react'
 import { Button } from './ui/button'
 import Image from 'next/image'
 import { checkUser } from '@/lib/checkUser'
-import { CalendarDays, Users } from 'lucide-react'
+import { CalendarDays, Users, Sparkles } from 'lucide-react'
 import CreditButton from './CreditButton'
 import RoleRedirect from './RoleRedirect'
 
@@ -52,6 +52,12 @@ const Header = async () => {
                 <Link href="/explore">
                   <Users size={16} />
                   <span className="hidden md:inline">Explore</span>
+                </Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link href="/kublet-ai">
+                  <Sparkles size={16} className="text-amber-400" />
+                  <span className="hidden md:inline">Kublet AI</span>
                 </Link>
               </Button>
               <Button variant="default" asChild>
