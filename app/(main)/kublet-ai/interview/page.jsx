@@ -28,6 +28,13 @@ export default function InterviewRoomPage() {
   const [micStatus, setMicStatus] = useState("idle"); // idle | checking | granted | denied
   const [activeStage, setActiveStage] = useState("intro"); // intro | projects | technical | behavioral | ended
   const [error, setError] = useState(null);
+
+  const [connectionStatus, setConnectionStatus] = useState("disconnected"); // disconnected | connecting | connected
+  const [socketOpen, setSocketOpen] = useState(false);
+  const [socketClosed, setSocketClosed] = useState(true);
+  const [micActive, setMicActive] = useState(false);
+  const [audioOutputActive, setAudioOutputActive] = useState(false);
+  const [lastMessageTimestamp, setLastMessageTimestamp] = useState(null);
   
   const bolnaClientRef = useRef(null);
 
@@ -84,7 +91,13 @@ export default function InterviewRoomPage() {
 
     setError(null);
     setCallState("connecting");
+    setConnectionStatus("connecting");
     setMicStatus("checking");
+    setSocketOpen(false);
+    setSocketClosed(false);
+    setMicActive(false);
+    setAudioOutputActive(false);
+    setLastMessageTimestamp(null);
 
     try {
       // Configure Bolna client
@@ -99,6 +112,11 @@ export default function InterviewRoomPage() {
             setCallState("active");
           } else {
             setCallState("completed");
+            setConnectionStatus("disconnected");
+            setSocketOpen(false);
+            setSocketClosed(true);
+            setMicActive(false);
+            setAudioOutputActive(false);
             setAgentConnected(false);
           }
         },
@@ -110,23 +128,58 @@ export default function InterviewRoomPage() {
         onMediaPermissionGranted: () => {
           setMicStatus("granted");
         },
+
+        onConnected: () => {
+          setConnectionStatus("connected");
+        },
+
+        onSocketOpen: () => {
+          setSocketOpen(true);
+          setSocketClosed(false);
+        },
+
+        onSocketClose: () => {
+          setSocketOpen(false);
+          setSocketClosed(true);
+        },
+
+        onMicActive: (isActive) => {
+          setMicActive(isActive);
+        },
+
+        onAudioOutputActive: (isActive) => {
+          setAudioOutputActive(isActive);
+        },
+
+        onMessageReceived: (timestamp) => {
+          setLastMessageTimestamp(timestamp);
+        },
         
         onError: (errorType, errorObj) => {
           console.error("Bolna Client Error:", errorType, errorObj);
           
-          if (errorType === "websocket_error" || errorType === "audio_decoding_error") {
+          if (errorType === "websocket_error") {
             setError(
               "Unable to connect to Bolna Voice Service. Please verify that the proxy is running."
             );
             setCallState("ready");
+            setConnectionStatus("disconnected");
+            setSocketOpen(false);
+            setSocketClosed(true);
             setAgentConnected(false);
+          } else if (errorType === "audio_decoding_error") {
+            console.warn("Transient audio decoding error:", errorObj);
+            // Log warning but do not crash the call session or reset state.
           } else if (errorType === "microphone_access_error" || errorObj?.message?.includes("Permission")) {
             setMicStatus("denied");
             setError("Microphone permission was denied. Please allow microphone access to proceed.");
             setCallState("ready");
+            setConnectionStatus("disconnected");
+            setMicActive(false);
           } else {
             setError(`An unexpected error occurred: ${errorType}`);
             setCallState("ready");
+            setConnectionStatus("disconnected");
           }
         }
       };
@@ -153,8 +206,14 @@ export default function InterviewRoomPage() {
       }
     }
     setCallState("completed");
+    setConnectionStatus("disconnected");
+    setSocketOpen(false);
+    setSocketClosed(true);
+    setMicActive(false);
+    setAudioOutputActive(false);
     setAgentConnected(false);
     setActiveStage("ended");
+    router.push("/kublet-ai");
   };
 
   const handleBackToDashboard = () => {
@@ -177,7 +236,7 @@ export default function InterviewRoomPage() {
           <span>Exit Interview Room</span>
         </button>
         <div className="flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-full bg-stone-900 border border-white/5">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping motion-reduce:animate-none" />
           <span className="text-stone-300">Live AI Room</span>
         </div>
       </header>
@@ -189,7 +248,7 @@ export default function InterviewRoomPage() {
         <section className="md:col-span-2 space-y-6">
           <Card className="bg-[#0f0f11] border border-white/10 p-6 relative overflow-hidden">
             {callState === "active" && (
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500 animate-pulse" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500 animate-pulse motion-reduce:animate-none" />
             )}
             
             <CardHeader className="p-0 pb-6">
@@ -207,8 +266,8 @@ export default function InterviewRoomPage() {
                 {/* Outward waves */}
                 {callState === "active" && (
                   <>
-                    <div className="absolute w-36 h-36 rounded-full border border-emerald-400/20 bg-emerald-400/5 animate-ping duration-1000" />
-                    <div className="absolute w-48 h-48 rounded-full border border-emerald-400/10 bg-emerald-400/2 animate-ping duration-2000" />
+                    <div className="absolute w-36 h-36 rounded-full border border-emerald-400/20 bg-emerald-400/5 animate-ping duration-1000 motion-reduce:animate-none" />
+                    <div className="absolute w-48 h-48 rounded-full border border-emerald-400/10 bg-emerald-400/2 animate-ping duration-2000 motion-reduce:animate-none" />
                   </>
                 )}
                 
@@ -217,14 +276,14 @@ export default function InterviewRoomPage() {
                     callState === "active"
                       ? "bg-emerald-500/10 border-emerald-400 text-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.2)]"
                       : callState === "connecting"
-                      ? "bg-amber-500/10 border-amber-400 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.15)] animate-pulse"
+                      ? "bg-amber-500/10 border-amber-400 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.15)] animate-pulse motion-reduce:animate-none"
                       : "bg-white/2 border-white/10 text-stone-400"
                   }`}
                 >
                   {callState === "active" ? (
-                    <Activity size={36} className="animate-pulse" />
+                    <Activity size={36} className="animate-pulse motion-reduce:animate-none" />
                   ) : callState === "connecting" ? (
-                    <Loader2 size={36} className="animate-spin" />
+                    <Loader2 size={36} className="animate-spin motion-reduce:animate-none" />
                   ) : (
                     <PhoneCall size={36} />
                   )}
@@ -236,11 +295,11 @@ export default function InterviewRoomPage() {
                 <div className="flex flex-col gap-1 text-center p-3 rounded-lg bg-stone-900/40 border border-white/5">
                   <span className="text-xs text-stone-500 uppercase tracking-wider font-mono">Connection</span>
                   <span className={`font-semibold ${
-                    agentConnected ? "text-emerald-400" : "text-stone-400"
+                    connectionStatus === "connected" ? "text-emerald-400" : connectionStatus === "connecting" ? "text-amber-400" : "text-stone-400"
                   }`}>
-                    {callState === "active" && agentConnected
-                      ? "Agent Connected"
-                      : callState === "connecting"
+                    {connectionStatus === "connected"
+                      ? "Connected"
+                      : connectionStatus === "connecting"
                       ? "Connecting..."
                       : "Disconnected"}
                   </span>
@@ -298,6 +357,74 @@ export default function InterviewRoomPage() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Connection Health Panel */}
+          <Card className="bg-[#0f0f11] border border-white/10 p-6">
+            <CardHeader className="p-0 pb-4 border-b border-white/5">
+              <CardTitle className="text-lg font-semibold text-stone-100 flex items-center gap-2">
+                <Activity size={18} className="text-amber-400" />
+                Connection Health Panel
+              </CardTitle>
+              <CardDescription className="text-xs text-stone-400 mt-1">
+                Real-time diagnostic metrics for the voice interview session.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0 pt-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-mono">
+                {/* Socket Open */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-stone-900/40 border border-white/5">
+                  <span className="text-stone-400 text-xs">Socket Open</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${socketOpen ? "bg-emerald-500 animate-pulse motion-reduce:animate-none" : "bg-stone-600"}`} />
+                    <span className={socketOpen ? "text-emerald-400 font-semibold" : "text-stone-500"}>
+                      {socketOpen ? "True" : "False"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Socket Closed */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-stone-900/40 border border-white/5">
+                  <span className="text-stone-400 text-xs">Socket Closed</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${socketClosed ? "bg-red-500" : "bg-stone-600"}`} />
+                    <span className={socketClosed ? "text-red-400 font-semibold" : "text-stone-500"}>
+                      {socketClosed ? "True" : "False"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Mic Active */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-stone-900/40 border border-white/5">
+                  <span className="text-stone-400 text-xs">Mic Active</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${micActive ? "bg-emerald-500 animate-pulse motion-reduce:animate-none" : "bg-stone-600"}`} />
+                    <span className={micActive ? "text-emerald-400 font-semibold" : "text-stone-500"}>
+                      {micActive ? "True" : "False"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Audio Output Active */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-stone-900/40 border border-white/5">
+                  <span className="text-stone-400 text-xs">Audio Output Active</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${audioOutputActive ? "bg-emerald-500 animate-pulse motion-reduce:animate-none" : "bg-stone-600"}`} />
+                    <span className={audioOutputActive ? "text-emerald-400 font-semibold" : "text-stone-500"}>
+                      {audioOutputActive ? "True" : "False"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Last Message Timestamp */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-stone-900/40 border border-white/5 text-sm font-mono">
+                <span className="text-stone-400 text-xs">Last Message Timestamp</span>
+                <span className="text-amber-400 font-semibold">
+                  {lastMessageTimestamp ? new Date(lastMessageTimestamp).toLocaleTimeString() : "--:--:--"}
+                </span>
+              </div>
             </CardContent>
           </Card>
         </section>

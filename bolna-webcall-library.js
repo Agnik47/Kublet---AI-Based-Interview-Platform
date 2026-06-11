@@ -27,21 +27,32 @@ class BolnaWebCalling {
     this.onFirstAudioPacket = config.onFirstAudioPacket || function() {};
     this.onError = config.onError || function() {};
     this.onMediaPermissionGranted = config.onMediaPermissionGranted || function() {};
+    this.onConnected = config.onConnected || function() {};
+    this.onSocketOpen = config.onSocketOpen || function() {};
+    this.onSocketClose = config.onSocketClose || function() {};
+    this.onMicActive = config.onMicActive || function() {};
+    this.onAudioOutputActive = config.onAudioOutputActive || function() {};
+    this.onMessageReceived = config.onMessageReceived || function() {};
   }
 
   decodeAndPlayAudio(base64Packet) {
+    console.log(`[Audio] Incoming audio packet. Size: ${base64Packet.length} characters`);
     return new Promise((resolve, reject) => {
       const arrayBuffer = this.base64ToArrayBuffer(base64Packet);
 
       this.audioOutputContext
         .decodeAudioData(arrayBuffer)
         .then((decodedData) => {
+          console.log(`[Audio] Audio packet decoded successfully. Duration: ${decodedData.duration.toFixed(2)}s, Sample Rate: ${decodedData.sampleRate}Hz`);
           const source = this.audioOutputContext.createBufferSource();
           source.buffer = decodedData;
           source.connect(this.audioOutputContext.destination);
 
+          this.onAudioOutputActive(true);
+
           source.onended = () => {
-            console.log('Audio playback ended');
+            console.log('[Audio] Audio playback ended');
+            this.onAudioOutputActive(false);
             resolve();
           };
           source.start();
@@ -49,7 +60,8 @@ class BolnaWebCalling {
           this.outputAudioBufferSourceNode = source;
         })
         .catch((error) => {
-          console.error('Error decoding audio data', error);
+          console.error('[Audio] Audio decode failure (EncodingError):', error);
+          this.onAudioOutputActive(false);
           this.onError('audio_decoding_error', error);
           reject(error);
         });
@@ -98,6 +110,7 @@ class BolnaWebCalling {
       this.outputAudioBufferSourceNode.stop();
       this.outputAudioBufferSourceNode = null;
     }
+    this.onAudioOutputActive(false);
   }
 
   sendInitPacket() {
@@ -141,6 +154,16 @@ class BolnaWebCalling {
       console.log('Call already in progress');
       return;
     }
+
+    // Explicitly resume audio context if suspended (browser security restrictions)
+    if (this.audioOutputContext && this.audioOutputContext.state === 'suspended') {
+      console.log('[Audio] Resuming audioOutputContext on user gesture...');
+      this.audioOutputContext.resume().then(() => {
+        console.log('[Audio] audioOutputContext successfully resumed.');
+      }).catch(err => {
+        console.error('[Audio] Failed to resume audioOutputContext:', err);
+      });
+    }
     
     this.isWebCallOngoing = true;
     this.onCallStateChange(true);
@@ -162,6 +185,8 @@ class BolnaWebCalling {
         stream.getTracks().forEach((track) => track.stop());
       }
       
+      this.onMicActive(false);
+      this.onSocketClose();
       this.onCallStateChange(false);
     };
 
@@ -177,10 +202,14 @@ class BolnaWebCalling {
       .getUserMedia(constraints)
       .then((stream) => {
         this.onMediaPermissionGranted();
+        this.onMicActive(true);
+        this.mediaStream = stream; // Store reference to track lifecycle
         
         const ws = new WebSocket(url);
         ws.onopen = () => {
           console.log('WebSocket connected.');
+          this.onConnected(); // Notify browser connected
+          this.onSocketOpen();
           this.processQueueMessages();
           this.sendInitPacket();
         };
@@ -192,6 +221,7 @@ class BolnaWebCalling {
         
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
+          this.onMessageReceived(Date.now());
           this.handleWebsocketMessage(data);
         };
         
@@ -207,6 +237,7 @@ class BolnaWebCalling {
         const audioContext = new window.AudioContext({
           sampleRate: this.RATE,
         });
+        this.audioInputContext = audioContext; // Store reference
         
         const source = audioContext.createMediaStreamSource(stream);
         const context = source.context;
@@ -215,6 +246,7 @@ class BolnaWebCalling {
           this.CHANNELS,
           this.CHANNELS
         );
+        this.audioProcessor = processor; // Store reference
         
         processor.onaudioprocess = (audioProcessingEvent) => {
           const inputBuffer = audioProcessingEvent.inputBuffer;
@@ -247,8 +279,53 @@ class BolnaWebCalling {
     this.isAcknowledgementReceived = false;
 
     if (this.websocket) {
-      this.websocket.close();
+      try {
+        this.websocket.close();
+      } catch (e) {
+        console.error('Error closing websocket:', e);
+      }
       this.websocket = null;
+    }
+
+    this.clearSpeakerPlayback();
+    this.onSocketClose();
+
+    // Release all active tracks, processors, and contexts
+    if (this.audioProcessor) {
+      try {
+        this.audioProcessor.disconnect();
+      } catch (e) {
+        console.error('Error disconnecting audio processor:', e);
+      }
+      this.audioProcessor = null;
+    }
+
+    if (this.mediaStream) {
+      try {
+        this.mediaStream.getTracks().forEach((track) => track.stop());
+      } catch (e) {
+        console.error('Error stopping stream tracks:', e);
+      }
+      this.mediaStream = null;
+    }
+    this.onMicActive(false);
+
+    if (this.audioInputContext) {
+      try {
+        this.audioInputContext.close();
+      } catch (e) {
+        console.error('Error closing audio input context:', e);
+      }
+      this.audioInputContext = null;
+    }
+
+    if (this.audioOutputContext) {
+      try {
+        this.audioOutputContext.close();
+      } catch (e) {
+        console.error('Error closing audio output context:', e);
+      }
+      this.audioOutputContext = new window.AudioContext(); // Prepare a new context for potential restart
     }
   }
 

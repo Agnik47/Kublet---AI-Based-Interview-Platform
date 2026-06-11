@@ -30,6 +30,11 @@ ${JSON.stringify(profile, null, 2)}
 
 Design a recruiter-style interview plan. Questions must prioritize the candidate's actual projects and claimed skills listed in their profile. Avoid generic questions. Craft realistic, resume-specific scenario questions.
 
+To keep the interview strictly grounded in the candidate's actual experience and prevent generic chat behavior:
+1. Ensure all questions and follow-ups reference specific projects or skills explicitly found in the candidate's profile.
+2. In the "followUpStrategies", include specific tactics for challenging unsupported claims (e.g., "If the candidate claims skills or experience not listed on their resume, challenge them directly: 'I don't see X mentioned in your resume. Could you explain where you've used it?'").
+3. In the "focusAreas", list the core technologies and projects from the profile that the interviewer should strictly stick to.
+
 Respond ONLY with a valid JSON object. Do not include markdown formatting, backticks (e.g. \`\`\`json), or comments.
 
 Expected JSON schema:
