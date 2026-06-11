@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { analyzeResume } from "@/actions/resume";
 import { generateInterviewBlueprint } from "@/actions/interviewBlueprint";
+import { startBolnaSession } from "@/actions/bolna";
+import { useRouter } from "next/navigation";
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -36,7 +38,31 @@ export default function ResumeUpload() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [profile, setProfile] = useState(null);
   const [blueprint, setBlueprint] = useState(null);
+  const [isStartingInterview, setIsStartingInterview] = useState(false);
   const fileInputRef = useRef(null);
+  const router = useRouter();
+
+  const handleStartInterview = async () => {
+    if (!blueprint || isStartingInterview) return;
+
+    setIsStartingInterview(true);
+    setError(null);
+
+    try {
+      const sessionConfig = await startBolnaSession(profile, blueprint);
+      
+      // Save configuration to localStorage
+      localStorage.setItem("bolnaSessionConfig", JSON.stringify(sessionConfig));
+      
+      // Redirect to the interview page
+      router.push("/kublet-ai/interview");
+    } catch (err) {
+      console.error("Failed to start Bolna session:", err);
+      setError(err.message || "Failed to start the AI Voice Interview. Please check your connection.");
+    } finally {
+      setIsStartingInterview(false);
+    }
+  };
 
   const formatFileSize = (bytes) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -751,6 +777,31 @@ export default function ResumeUpload() {
                 <li className="text-xs text-stone-500 list-none font-light">No behavioral questions generated</li>
               )}
             </ul>
+          </div>
+
+          {/* Start AI Interview Action */}
+          <div className="pt-6 border-t border-white/10 flex flex-col items-center gap-3">
+            <Button
+              onClick={handleStartInterview}
+              disabled={isStartingInterview}
+              variant="gold"
+              className="w-full py-6 text-sm font-medium flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-black border-none cursor-pointer"
+            >
+              {isStartingInterview ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Initiating AI Voice Interview...
+                </>
+              ) : (
+                <>
+                  <Sparkles size={16} />
+                  Start AI Interview
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-stone-500 text-center">
+              Requires microphone access. You will be redirected to the secure voice call room.
+            </p>
           </div>
         </section>
       )}
