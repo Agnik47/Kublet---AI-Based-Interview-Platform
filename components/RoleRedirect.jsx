@@ -6,7 +6,7 @@ const RoleRedirect = ({ role }) => {
 
     const pathname = usePathname();
     const router = useRouter()
-    const INTERVIEWER_RESTRICTED = ["/appointments", "/explore"];
+    const INTERVIEWER_RESTRICTED = ["/appointments", "/explore", "/kublet-ai"];
     const INTERVIEWEE_RESTRICTED = ["/dashboard"];
 
     useEffect(() => {

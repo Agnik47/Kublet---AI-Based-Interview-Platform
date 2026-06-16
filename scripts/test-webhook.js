@@ -83,7 +83,7 @@ async function runTest() {
       console.log('✓ Database updated with mock streamCallId.');
     }
 
-    const webhookEndpoint = `${targetHost.replace(/\/$/, '')}/api/webhooks/strems`;
+    const webhookEndpoint = `${targetHost.replace(/\/$/, '')}/api/webhooks/stream`;
     console.log(`📬 Posting to endpoint: \x1b[36m${webhookEndpoint}\x1b[0m`);
 
     // ==========================================

@@ -9,7 +9,7 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
+# interview_preparation_guide.md
 # testing
 /coverage
 
